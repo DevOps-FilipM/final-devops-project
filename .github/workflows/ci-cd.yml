@@ -51,7 +51,7 @@ jobs:
         if: failure()
         uses: dawidd6/action-send-mail@v3
         with:
-          server_address: email-smtp.eu-central-1.amazonaws.com
+          server_address: smtp.gmail.com
           server_port: 587
           username: ${{ secrets.SES_SMTP_USERNAME }}
           password: ${{ secrets.SES_SMTP_PASSWORD }}
@@ -102,13 +102,13 @@ jobs:
       - name: Verify deployment
         run: |
           sleep 10
-          curl --fail http://$\{\{ secrets.EC2_HOST }}:3000/health
+          curl --fail http://${{ secrets.EC2_HOST }}:3000/health
 
       - name: Send email on deploy success
         if: success()
         uses: dawidd6/action-send-mail@v3
         with:
-          server_address: email-smtp.eu-central-1.amazonaws.com
+          server_address: smtp.gmail.com
           server_port: 587
           username: ${{ secrets.SES_SMTP_USERNAME }}
           password: ${{ secrets.SES_SMTP_PASSWORD }}
@@ -118,7 +118,7 @@ jobs:
             Commit: ${{ github.sha }}
             Branch: ${{ github.ref_name }}
             Author: ${{ github.actor }}
-            App URL: http://$\{\{ secrets.EC2_HOST }}:3000
+            App URL: http://${{ secrets.EC2_HOST }}:3000
           to: ${{ secrets.NOTIFY_EMAIL }}
           from: devops@${{ secrets.SES_DOMAIN }}
 
@@ -126,7 +126,7 @@ jobs:
         if: failure()
         uses: dawidd6/action-send-mail@v3
         with:
-          server_address: email-smtp.eu-central-1.amazonaws.com
+          server_address: smtp.gmail.com
           server_port: 587
           username: ${{ secrets.SES_SMTP_USERNAME }}
           password: ${{ secrets.SES_SMTP_PASSWORD }}
