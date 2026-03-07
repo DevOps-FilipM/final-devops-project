@@ -1,0 +1,37 @@
+const express = require('express');
+const app = express();
+app.use(express.json());
+
+const PORT = process.env.PORT || 3000;
+let todos = [];
+let nextId = 1;
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date() });
+});
+
+app.get('/todos', (req, res) => {
+  res.json(todos);
+});
+
+app.post('/todos', (req, res) => {
+  const todo = { id: nextId++, title: req.body.title, done: false };
+  todos.push(todo);
+  res.status(201).json(todo);
+});
+
+app.put('/todos/:id', (req, res) => {
+  const todo = todos.find(t => t.id === parseInt(req.params.id));
+  if (!todo) return res.status(404).json({ error: 'Not found' });
+  todo.done = !todo.done;
+  res.json(todo);
+});
+
+app.delete('/todos/:id', (req, res) => {
+  todos = todos.filter(t => t.id !== parseInt(req.params.id));
+  res.json({ message: 'Deleted' });
+});
+
+app.listen(PORT, () => {
+  console.log(`Todo app running on port ${PORT}`);
+});
