@@ -94,6 +94,7 @@ jobs:
               --name todo-app \
               --restart always \
               -p 3000:3000 \
+              -e HOST=${{ secrets.EC2_HOST }} \
               ${{ secrets.DOCKERHUB_USERNAME }}/todo-app:latest
 
             # Usuniecie starych obrazow
