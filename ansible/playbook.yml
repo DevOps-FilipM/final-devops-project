@@ -1,0 +1,131 @@
+---
+- name: Configure DevOps Project Server
+  hosts: webservers
+  become: yes
+
+  vars:
+    docker_image: "fmagiera/todo-app:latest"
+    app_port: 3000
+    grafana_port: 3001
+    prometheus_port: 9090
+
+  tasks:
+    # ============================================
+    # Docker
+    # ============================================
+    - name: Install Docker
+      yum:
+        name: docker
+        state: present
+
+    - name: Start and enable Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add ec2-user to docker group
+      user:
+        name: ec2-user
+        groups: docker
+        append: yes
+
+    # ============================================
+    # Node Exporter
+    # ============================================
+    - name: Create node_exporter user
+      user:
+        name: node_exporter
+        shell: /bin/false
+        create_home: no
+
+    - name: Download Node Exporter
+      get_url:
+        url: https://github.com/prometheus/node_exporter/releases/download/v1.7.0/node_exporter-1.7.0.linux-amd64.tar.gz
+        dest: /tmp/node_exporter.tar.gz
+
+    - name: Extract Node Exporter
+      unarchive:
+        src: /tmp/node_exporter.tar.gz
+        dest: /tmp/
+        remote_src: yes
+
+    - name: Copy Node Exporter binary
+      copy:
+        src: /tmp/node_exporter-1.7.0.linux-amd64/node_exporter
+        dest: /usr/local/bin/node_exporter
+        owner: node_exporter
+        group: node_exporter
+        mode: '0755'
+        remote_src: yes
+
+    - name: Create Node Exporter systemd service
+      copy:
+        dest: /etc/systemd/system/node_exporter.service
+        content: |
+          [Unit]
+          Description=Node Exporter
+          After=network.target
+
+          [Service]
+          User=node_exporter
+          ExecStart=/usr/local/bin/node_exporter
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Start and enable Node Exporter
+      systemd:
+        name: node_exporter
+        state: started
+        enabled: yes
+        daemon_reload: yes
+
+    # ============================================
+    # Todo App
+    # ============================================
+    - name: Pull Todo App Docker image
+      docker_image:
+        name: "{{ docker_image }}"
+        source: pull
+
+    - name: Run Todo App container
+      docker_container:
+        name: todo-app
+        image: "{{ docker_image }}"
+        state: started
+        restart_policy: always
+        ports:
+          - "{{ app_port }}:3000"
+        env:
+          HOST: "{{ ansible_host }}"
+
+    # ============================================
+    # Monitoring
+    # ============================================
+    - name: Create monitoring directory
+      file:
+        path: /home/ec2-user/monitoring
+        state: directory
+        owner: ec2-user
+        group: ec2-user
+
+    - name: Copy Prometheus config
+      copy:
+        src: ../monitoring/prometheus.yml
+        dest: /home/ec2-user/monitoring/prometheus.yml
+        owner: ec2-user
+        group: ec2-user
+
+    - name: Copy docker-compose for monitoring
+      copy:
+        src: ../monitoring/docker-compose.yml
+        dest: /home/ec2-user/monitoring/docker-compose.yml
+        owner: ec2-user
+        group: ec2-user
+
+    - name: Start monitoring stack
+      shell: docker-compose up -d
+      args:
+        chdir: /home/ec2-user/monitoring
+      become_user: ec2-user
