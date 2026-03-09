@@ -32,6 +32,26 @@ app.delete('/todos/:id', (req, res) => {
   res.json({ message: 'Deleted' });
 });
 
+app.get('/', (req, res) => {
+  res.json({
+    name: 'Todo App API',
+    version: '1.0.0',
+    description: 'Simple Todo App for DevOps project',
+    author: 'fmagiera',
+    endpoints: {
+      health: 'GET /health',
+      todos: 'GET /todos',
+      create: 'POST /todos',
+      update: 'PUT /todos/:id',
+      delete: 'DELETE /todos/:id'
+    },
+    monitoring: {
+      prometheus: 'http://' + (process.env.HOST || 'localhost') + ':9090',
+      grafana: 'http://' + (process.env.HOST || 'localhost') + ':3001'
+    }
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Todo app running on port ${PORT}`);
 });
