@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 app.use(express.json());
+app.use(express.static('public'));
 
 const PORT = process.env.PORT || 3000;
 let todos = [];
@@ -32,7 +33,7 @@ app.delete('/todos/:id', (req, res) => {
   res.json({ message: 'Deleted' });
 });
 
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
   res.json({
     name: 'Todo App API',
     version: '1.0.0',

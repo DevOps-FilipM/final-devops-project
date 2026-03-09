@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App — DevOps Project</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        header {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-bottom: 1px solid #334155;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 { font-size: 1.5rem; color: #38bdf8; }
+        header span { font-size: 0.85rem; color: #64748b; }
+        .monitoring-links {
+            display: flex;
+            gap: 12px;
+        }
+        .monitoring-links a {
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            text-decoration: none;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+        .monitoring-links a:hover { opacity: 0.8; }
+        .btn-prometheus { background: #e6522c; color: white; }
+        .btn-grafana { background: #f97316; color: white; }
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid #334155;
+        }
+        .card h2 {
+            font-size: 1rem;
+            color: #94a3b8;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 10px 16px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus { border-color: #38bdf8; }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.85; }
+        .btn-add { background: #38bdf8; color: #0f172a; }
+        .todo-list { list-style: none; }
+        .todo-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #1e293b;
+        }
+        .todo-item:last-child { border-bottom: none; }
+        .todo-checkbox {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #38bdf8;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.2s;
+        }
+        .todo-checkbox.done { background: #38bdf8; }
+        .todo-checkbox.done::after { content: '✓'; color: #0f172a; font-size: 12px; font-weight: bold; }
+        .todo-title {
+            flex: 1;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+        .todo-title.done {
+            text-decoration: line-through;
+            color: #475569;
+        }
+        .btn-delete {
+            background: transparent;
+            color: #ef4444;
+            border: 1px solid #ef4444;
+            padding: 4px 10px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+        }
+        .empty {
+            text-align: center;
+            color: #475569;
+            padding: 30px 0;
+            font-size: 0.9rem;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid #334155;
+        }
+        .stat-card .number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #38bdf8;
+        }
+        .stat-card .label {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📝 Todo App</h1>
+        <div class="monitoring-links">
+            <a id="prometheus-link" class="btn-prometheus" target="_blank">🔥 Prometheus</a>
+            <a id="grafana-link" class="btn-grafana" target="_blank">📊 Grafana</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="stats">
+            <div class="stat-card">
+                <div class="number" id="total">0</div>
+                <div class="label">Wszystkie</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="done-count">0</div>
+                <div class="label">Ukończone</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="pending">0</div>
+                <div class="label">Do zrobienia</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Dodaj zadanie</h2>
+            <div class="input-group">
+                <input type="text" id="todo-input" placeholder="Co masz do zrobienia?" />
+                <button class="btn-add" onclick="addTodo()">Dodaj</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Lista zadań</h2>
+            <ul class="todo-list" id="todo-list">
+                <li class="empty">Brak zadań — dodaj pierwsze! 🎉</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const API = '';
+
+        async function fetchInfo() {
+            const res = await fetch('/');
+            // skip — handled by Express
+        }
+
+        async function setMonitoringLinks() {
+            try {
+                const res = await fetch('/api');
+                const data = await res.json();
+                if (data.monitoring) {
+                    document.getElementById('prometheus-link').href = data.monitoring.prometheus;
+                    document.getElementById('grafana-link').href = data.monitoring.grafana;
+                }
+            } catch(e) {}
+        }
+
+        async function loadTodos() {
+            const res = await fetch('/todos');
+            const todos = await res.json();
+            const list = document.getElementById('todo-list');
+
+            document.getElementById('total').textContent = todos.length;
+            document.getElementById('done-count').textContent = todos.filter(t => t.done).length;
+            document.getElementById('pending').textContent = todos.filter(t => !t.done).length;
+
+            if (todos.length === 0) {
+                list.innerHTML = '<li class="empty">Brak zadań — dodaj pierwsze! 🎉</li>';
+                return;
+            }
+
+            list.innerHTML = todos.map(todo => `
+                <li class="todo-item">
+                    <div class="todo-checkbox ${todo.done ? 'done' : ''}" onclick="toggleTodo(${todo.id})"></div>
+                    <span class="todo-title ${todo.done ? 'done' : ''}">${todo.title}</span>
+                    <button class="btn-delete" onclick="deleteTodo(${todo.id})">Usuń</button>
+                </li>
+            `).join('');
+        }
+
+        async function addTodo() {
+            const input = document.getElementById('todo-input');
+            const title = input.value.trim();
+            if (!title) return;
+
+            await fetch('/todos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title })
+            });
+
+            input.value = '';
+            loadTodos();
+        }
+
+        async function toggleTodo(id) {
+            await fetch(`/todos/${id}`, { method: 'PUT' });
+            loadTodos();
+        }
+
+        async function deleteTodo(id) {
+            await fetch(`/todos/${id}`, { method: 'DELETE' });
+            loadTodos();
+        }
+
+        document.getElementById('todo-input').addEventListener('keypress', e => {
+            if (e.key === 'Enter') addTodo();
+        });
+
+        setMonitoringLinks();
+        loadTodos();
+    </script>
+</body>
+</html>
