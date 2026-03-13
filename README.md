@@ -39,7 +39,7 @@ graph TD
     E --> G[Prometheus :9090]
     E --> H[Grafana :3001]
     G --> H
-    B -->|powiadomienie| I[Email Gmail]
+    B -->|powiadomienie| I[Slack]
 
     style A fill:#2d3748,color:#fff
     style B fill:#24292e,color:#fff
@@ -62,7 +62,7 @@ graph TD
 | Konfiguracja serwera | Ansible |
 | Chmura | AWS EC2 (eu-central-1) |
 | CI/CD | GitHub Actions |
-| Powiadomienia | Gmail SMTP |
+| Powiadomienia | Slack |
 | Monitoring | Prometheus + Grafana + Node Exporter |
 
 ---
@@ -146,12 +146,13 @@ Skonfiguruj GitHub Secrets w repozytorium:
 | `EC2_HOST` | Publiczny IP serwera EC2 |
 | `EC2_USER` | Użytkownik SSH (ec2-user) |
 | `EC2_SSH_KEY` | Prywatny klucz SSH |
+| `SLACK_WEBHOOK_URL` | Webhook URL do Slacka |
 | `AWS_ACCESS_KEY_ID` | Klucz AWS |
 | `AWS_SECRET_ACCESS_KEY` | Sekret AWS |
-| `SES_SMTP_USERNAME` | Adres Gmail |
-| `SES_SMTP_PASSWORD` | App Password Gmail |
-| `NOTIFY_EMAIL` | Adres docelowy powiadomień |
-| `SES_DOMAIN` | Domena (gmail.com) |
+
+
+
+
 
 Od tego momentu każdy `git push` na `main` automatycznie deployuje aplikację.
 
@@ -166,7 +167,7 @@ graph LR
     D -->|NIE| E[✅ Koniec]
     D -->|TAK| F[Deploy na EC2 przez SSH]
     F --> G[Health check]
-    G --> H[📧 Email z wynikiem]
+    G --> H[📬 Slack notification]
 
     style C fill:#2496ED,color:#fff
     style F fill:#FF9900,color:#fff
