@@ -47,22 +47,16 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Send email on build failure
+      - name: Notify Slack on build failure
         if: failure()
-        uses: dawidd6/action-send-mail@v3
+        uses: slackapi/slack-github-action@v1.26.0
         with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: ${{ secrets.SES_SMTP_USERNAME }}
-          password: ${{ secrets.SES_SMTP_PASSWORD }}
-          subject: "❌ Build FAILED - ${{ github.repository }}"
-          body: |
-            Build failed for commit ${{ github.sha }}
-            Branch: ${{ github.ref_name }}
-            Author: ${{ github.actor }}
-            See details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          to: ${{ secrets.NOTIFY_EMAIL }}
-          from: devops@${{ secrets.SES_DOMAIN }}
+          payload: |
+            {
+              "text": "❌ *Build FAILED* — `${{ github.repository }}`\n*Branch:* `${{ github.ref_name }}`\n*Autor:* ${{ github.actor }}\n*Commit:* `${{ github.sha }}`\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Zobacz logi>"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   # ============================================
   # JOB 2: Deploy na EC2
@@ -82,22 +76,15 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Pobranie najnowszego obrazu
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/todo-app:latest
-
-            # Zatrzymanie starego kontenera
             docker stop todo-app || true
             docker rm todo-app || true
-
-            # Uruchomienie nowego kontenera
             docker run -d \
               --name todo-app \
               --restart always \
               -p 3000:3000 \
               -e HOST=${{ secrets.EC2_HOST }} \
               ${{ secrets.DOCKERHUB_USERNAME }}/todo-app:latest
-
-            # Usuniecie starych obrazow
             docker image prune -f
 
       - name: Verify deployment
@@ -105,38 +92,24 @@ jobs:
           sleep 10
           curl --fail http://${{ secrets.EC2_HOST }}:3000/health
 
-      - name: Send email on deploy success
+      - name: Notify Slack on deploy success
         if: success()
-        uses: dawidd6/action-send-mail@v3
+        uses: slackapi/slack-github-action@v1.26.0
         with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: ${{ secrets.SES_SMTP_USERNAME }}
-          password: ${{ secrets.SES_SMTP_PASSWORD }}
-          subject: "✅ Deploy SUCCESS - ${{ github.repository }}"
-          body: |
-            Deployment successful!
-            Commit: ${{ github.sha }}
-            Branch: ${{ github.ref_name }}
-            Author: ${{ github.actor }}
-            App URL: http://${{ secrets.EC2_HOST }}:3000
-          to: ${{ secrets.NOTIFY_EMAIL }}
-          from: devops@${{ secrets.SES_DOMAIN }}
+          payload: |
+            {
+              "text": "✅ *Deploy SUCCESS* — `${{ github.repository }}`\n*Branch:* `${{ github.ref_name }}`\n*Autor:* ${{ github.actor }}\n*Commit:* `${{ github.sha }}`\n*App:* http://${{ secrets.EC2_HOST }}:3000"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
-      - name: Send email on deploy failure
+      - name: Notify Slack on deploy failure
         if: failure()
-        uses: dawidd6/action-send-mail@v3
+        uses: slackapi/slack-github-action@v1.26.0
         with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: ${{ secrets.SES_SMTP_USERNAME }}
-          password: ${{ secrets.SES_SMTP_PASSWORD }}
-          subject: "❌ Deploy FAILED - ${{ github.repository }}"
-          body: |
-            Deployment failed!
-            Commit: ${{ github.sha }}
-            Branch: ${{ github.ref_name }}
-            Author: ${{ github.actor }}
-            See details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          to: ${{ secrets.NOTIFY_EMAIL }}
-          from: devops@${{ secrets.SES_DOMAIN }}
+          payload: |
+            {
+              "text": "❌ *Deploy FAILED* — `${{ github.repository }}`\n*Branch:* `${{ github.ref_name }}`\n*Autor:* ${{ github.actor }}\n*Commit:* `${{ github.sha }}`\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Zobacz logi>"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
