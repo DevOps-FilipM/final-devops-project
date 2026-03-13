@@ -36,7 +36,7 @@ app.delete('/todos/:id', (req, res) => {
 app.get('/api', (req, res) => {
   res.json({
     name: 'Todo App API',
-    version: '1.0.0',
+    version: '1.0.1',
     description: 'Simple Todo App for DevOps project',
     author: 'fmagiera',
     endpoints: {
